@@ -1,10 +1,11 @@
 package sysutil
 
 import (
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"runtime"
+
+	"github.com/fcfcqloow/go-advance/log"
 )
 
 func Stats() (memStats runtime.MemStats) {
@@ -14,7 +15,7 @@ func Stats() (memStats runtime.MemStats) {
 
 func RunViewMemoryLocal() {
 	go func() {
-		log.Println("http://localhost:6060/debug/pprof")
-		log.Println(http.ListenAndServe("localhost:6060", nil))
+		log.Info("http://localhost:6060/debug/pprof")
+		log.Info(http.ListenAndServe("localhost:6060", nil))
 	}()
 }
