@@ -12,8 +12,7 @@ type (
 	}
 	rnn struct {
 		dz.Layer
-		x2h, h2h dz.Layer
-		h        interface{}
+		h dz.Variable
 	}
 	rnnOption struct{ inSize *int }
 	RNNOption func(*rnnOption)
@@ -40,8 +39,8 @@ func NewRNN(hiddenSize int, options ...RNNOption) RNN {
 
 	instance := new(rnn)
 	instance.Layer = dz.ExtendsLayer(instance.Forward)
-	instance.x2h = NewLinear(hiddenSize, linearOpt...)
-	instance.h2h = NewLinear(hiddenSize, append(linearOpt, Nobias(true))...)
+	instance.Set("x2h", NewLinear(hiddenSize, linearOpt...))
+	instance.Set("h2h", NewLinear(hiddenSize, append(linearOpt, Nobias(true))...))
 	instance.h = nil
 
 	return instance
@@ -51,11 +50,11 @@ func (r *rnn) Forward(xs ...dz.Variable) dz.Variables {
 	x := xs[0]
 	var hNew dz.Variable
 	if r.h == nil {
-		a1 := r.x2h.Apply(x).First()
+		a1 := r.x2h().Apply(x).First()
 		hNew = fn.Tanh(a1)
 	} else {
-		a1 := r.x2h.Apply(x).First()
-		a2 := r.h2h.Apply(x).First()
+		a1 := r.x2h().Apply(x).First()
+		a2 := r.h2h().Apply(r.h).First()
 		hNew = fn.Tanh(fn.Add(a1, a2))
 	}
 
@@ -65,4 +64,12 @@ func (r *rnn) Forward(xs ...dz.Variable) dz.Variables {
 
 func (r *rnn) ResetState() {
 	r.h = nil
+}
+
+func (r *rnn) x2h() Linear {
+	return r.Get("x2h").(*linear)
+}
+
+func (r *rnn) h2h() Linear {
+	return r.Get("h2h").(*linear)
 }

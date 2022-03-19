@@ -27,7 +27,7 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.LOG_LEVEL_DEBUG)
+	// log.SetLevel(log.LOG_LEVEL_DEBUG)
 	log.SetFunctionSkip(log.DEFAULT_SKIP + 1)
 	log.DebugOutput = func(values []interface{}, filePath log.FilePath, line log.ProgramLine, name log.MethodName) []string {
 		return []string{"[", string(filePath), "]: ", strings.Join(log.InterfacesToStrings(values), " ")}
@@ -37,17 +37,17 @@ func main() {
 }
 
 func sampleMLP() {
-	x := dz.NewVariable(core.NewRand(core.Shape{R: 100, C: 1}))
-	a1 := x.Data().CopyApply(func(f float64) float64 { return math.Sin(2 * math.Pi * f) })
-	a2 := core.NewRand(core.Shape{R: 100, C: 1})
-	y := fn.Add(dz.NewVariable(a1), dz.NewVariable(a2))
-
 	const (
 		lr         = 0.2
 		maxIter    = 10000
 		hiddenSize = 10
 		fileName   = "test.w"
 	)
+
+	x := dz.NewVariable(core.NewRand(core.Shape{R: 100, C: 1}))
+	a1 := x.Data().CopyApply(func(f float64) float64 { return math.Sin(2 * math.Pi * f) })
+	a2 := core.NewRand(core.Shape{R: 100, C: 1})
+	y := fn.Add(dz.NewVariable(a1), dz.NewVariable(a2))
 
 	model := models.NewMLP([]int{hiddenSize, 2})
 	optim := optimizers.NewSGD(dz.Lr(lr)).Setup(model)
@@ -62,7 +62,6 @@ func sampleMLP() {
 
 		model.ClearGrads()
 		loss.Backward(dz.RetainGrad(true))
-
 		optim.Update()
 
 		if i%100 == 0 {
@@ -75,10 +74,12 @@ func sampleMLP() {
 	}
 }
 func sampleSpiral() {
-	batchSize := 30
-	maxEpoch := 300
-	hiddenSize := 10
-	lr := 1.0
+	const (
+		batchSize  = 30
+		maxEpoch   = 300
+		hiddenSize = 10
+		lr         = 1.0
+	)
 
 	trainSet := datasets.NewSpiral(dz.Train(true))
 	testSet := datasets.NewSpiral(dz.Train(false))
@@ -127,11 +128,14 @@ func sampleSpiral() {
 	Contour(model)
 }
 func sampleMnist() {
+	const (
+		maxEpoch   = 5
+		batchSize  = 100
+		hiddenSize = 1000
+	)
+
 	lossAcc := dgraph.NewLossAcc("train", infragraph.New())
 	testLossAcc := dgraph.NewLossAcc("test", infragraph.New())
-	maxEpoch := 5
-	batchSize := 100
-	hiddenSize := 1000
 	gray := func(m core.Matrix) core.Matrix { return m.CopyDivFloat(255) }
 	trainSet := datasets.NewMnist(dz.Train(true), dz.TransformData(gray))
 	testSet := datasets.NewMnist(dz.Train(false), dz.TransformData(gray))
@@ -230,6 +234,8 @@ func sampleRNN() {
 	}
 
 	model.ResetState()
+	x, _ := trainSet.Get(0)
+	model.Plot([]dz.Variable{dz.AsVariable(x)})
 	graph := infragraph.New()
 	xs := core.Linspace(0, 4*math.Pi, 1000).CopyApply(math.Cos)
 	predList := []float64{}
